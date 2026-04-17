@@ -10,15 +10,18 @@ Sub IntegrarComWord()
     
     SubstituirPlaceholders doc, "pesquisa"
 
-    SalvarComoPDF doc, Worksheets("pesquisa").Range("F4").Value
+    SalvarComoPDF doc, Worksheets("pesquisa").Range("H5").Value
 
-    Set doc = FecharDocumento(wordApp, ObterCaminhoArquivo())
+    doc.Close False
+    wordApp.Quit
 
-    MsgBox "Relatório Finalizado com Sucesso!" & vbNewLine & "Solicitação - " & Worksheets("pesquisa").Range("F4").Value 
+    MsgBox "Relatório Finalizado com Sucesso!" & vbNewLine & "Solicitação - " & Worksheets("pesquisa").Range("H5").Value 
     
     Exit Sub
 
 TratarErro:
+    doc.Close False
+    wordApp.Quit
     MsgBox "Erro ao gerar documento: " & Err.Description, vbCritical
 
 End Sub
@@ -27,17 +30,13 @@ End Sub
 Private Function CriarInstanciaWord() As Object
     Dim app As Object
     Set app = CreateObject("Word.Application")
-    app.Visible = False
+    app.Visible = True
     Set CriarInstanciaWord = app
 End Function
 
 
 Private Function AbrirDocumento(wordApp As Object, caminho As String) As Object
     Set AbrirDocumento = wordApp.Documents.Open(caminho)
-End Function
-
-Private Function FecharDocumento(wordApp As Object, caminho As String) As Object
-    Set FecharDocumento = wordApp.Documents.Close(caminho)
 End Function
 
 Private Function ObterCaminhoArquivo() As String
@@ -62,7 +61,6 @@ Private Sub SubstituirPlaceholders(doc As Object, nomePlanilha As String)
             valor = CStr(ws.Range(mapa(chave)).Value)
         End If
         
-        ' Substitui diretamente no Bookmark
         If doc.Bookmarks.Exists(chave) Then
             doc.Bookmarks(chave).Range.Text = valor
         End If
@@ -75,22 +73,24 @@ Private Function CriarMapaSubstituicoes() As Object
 
     Dim dict As Object
     Set dict = CreateObject("Scripting.Dictionary")
-    
-    dict.Add "num_solicitacao", "A4"
-    dict.Add "num_socio", "E4"
-    dict.Add "nome_socio", "F4"
-    dict.Add "email_socio", "G4"
-    dict.Add "assunto_solicitacao", "N4"
-    dict.Add "tipo_solicitacao", "M4"
-    dict.Add "data_solicitacao", "AR4"
-    dict.Add "texto_solicitacao", "AK4"
+
+    dict.Add "data_relatorio", "B1"
+    dict.Add "celular_socio", "J5"
+    dict.Add "num_solicitacao", "A5"
+    dict.Add "num_socio", "G5"
+    dict.Add "nome_socio", "H5"
+    dict.Add "email_socio", "I5"
+    dict.Add "assunto_solicitacao", "L5"
+    dict.Add "tipo_solicitacao", "L5"
+    dict.Add "data_solicitacao", "C5"
+    dict.Add "texto_solicitacao", "K5"
     
     Set CriarMapaSubstituicoes = dict
 
 End Function
 
 
-Private Sub SalvarComoPDF(doc As Object, identificador As String)
+Private Function SalvarComoPDF(doc As Object, identificador As String) As String
 
     Dim caminho As String
     
@@ -99,5 +99,9 @@ Private Sub SalvarComoPDF(doc As Object, identificador As String)
     doc.ExportAsFixedFormat _
         OutputFileName:=caminho, _
         ExportFormat:=17
+
+    SalvarComoPDF = caminho
+
+End Function
 
 End Sub
