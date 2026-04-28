@@ -10,12 +10,16 @@ Sub IntegrarComWord()
     
     SubstituirPlaceholders doc, "pesquisa"
 
+    Dim caminhoFoto As String
+    caminhoFoto = "M:\ADM_FIN\GER_FIN\14 - Diversos Marcello\15-sugestoes-reclamacoes\fotos-arquivadas\foto.jpg"
+    SubstituirImagemBookmark doc, "foto_socio", caminhoFoto
+
     SalvarComoPDF doc, Worksheets("pesquisa").Range("H5").Value
 
     doc.Close False
     wordApp.Quit
 
-    MsgBox "Relatório Finalizado com Sucesso!" & vbNewLine & "Solicitação - " & Worksheets("pesquisa").Range("H5").Value 
+    MsgBox "Relatório Finalizado com Sucesso!" & vbNewLine & "Solicitação - " & Worksheets("pesquisa").Range("H5").Value
     
     Exit Sub
 
@@ -43,6 +47,27 @@ Private Function ObterCaminhoArquivo() As String
     ObterCaminhoArquivo = "M:\ADM_FIN\GER_FIN\14 - Diversos Marcello\01-relatorios\08 - relatorios-macros\relatorio-solicitacoes\template_solicitacoes.docx"
 End Function
 
+Private Sub SubstituirImagemBookmark(doc As Object, nomeBookmark As String, caminhoImagem As String)
+    If caminhoImagem = "" Then Exit Sub
+    If Not doc.Bookmarks.Exists(nomeBookmark) Then Exit Sub
+
+    Dim rng As Object
+    Set rng = doc.Bookmarks(nomeBookmark).Range
+
+    ' Limpa o texto do bookmark e insere a imagem inline
+    rng.Text = ""
+    Dim shape As Object
+    Set shape = doc.InlineShapes.AddPicture( _
+        FileName:=caminhoImagem, _
+        LinkToFile:=False, _
+        SaveWithDocument:=True, _
+        Range:=rng)
+
+    ' Ajusta o tamanho se necessário (opcional)
+    shape.LockAspectRatio = True
+    shape.Height = 100 ' altura em pontos (~3,5 cm) — ajuste conforme o template
+End Sub
+
 
 Private Sub SubstituirPlaceholders(doc As Object, nomePlanilha As String)
 
@@ -68,7 +93,6 @@ Private Sub SubstituirPlaceholders(doc As Object, nomePlanilha As String)
 
 End Sub
 
-
 Private Function CriarMapaSubstituicoes() As Object
 
     Dim dict As Object
@@ -88,6 +112,7 @@ Private Function CriarMapaSubstituicoes() As Object
     Set CriarMapaSubstituicoes = dict
 
 End Function
+
 
 
 Private Function SalvarComoPDF(doc As Object, identificador As String) As String
