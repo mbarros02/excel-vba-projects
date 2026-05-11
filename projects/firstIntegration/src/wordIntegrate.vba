@@ -1,7 +1,7 @@
 Sub IntegrarComWord()
 
     On Error GoTo TratarErro
-    
+
     Dim wordApp As Object
     Dim doc As Object
     
@@ -54,7 +54,6 @@ Private Sub SubstituirImagemBookmark(doc As Object, nomeBookmark As String, cami
     Dim rng As Object
     Set rng = doc.Bookmarks(nomeBookmark).Range
 
-    ' Limpa o texto do bookmark e insere a imagem inline
     rng.Text = ""
     Dim shape As Object
     Set shape = doc.InlineShapes.AddPicture( _
@@ -63,9 +62,8 @@ Private Sub SubstituirImagemBookmark(doc As Object, nomeBookmark As String, cami
         SaveWithDocument:=True, _
         Range:=rng)
 
-    ' Ajusta o tamanho se necessário (opcional)
     shape.LockAspectRatio = True
-    shape.Height = 100 ' altura em pontos (~3,5 cm) — ajuste conforme o template
+    shape.Height = 100 
 End Sub
 
 
@@ -112,8 +110,6 @@ Private Function CriarMapaSubstituicoes() As Object
     Set CriarMapaSubstituicoes = dict
 
 End Function
-
-
 
 Private Function SalvarComoPDF(doc As Object, identificador As String) As String
 
