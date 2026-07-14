@@ -1,97 +1,70 @@
-Sub ImgConvert()
+Option Explicit
+
+Private Const CAMINHO_FOTO As String = _
+    "xxxxxxx.jpg"
+
+Private Const CELULA_FOTO As String = "Q5"
+Private Const PLANILHA_PESQUISA As String = "pesquisa"
+
+Public Function BuscarEConverterFoto() As String
     Dim conn As Object
     Dim rs As Object
-    Dim stream As Object
 
-    Set conn = DbConect()
-    If conn Is Nothing Then
-        MsgBox "Falha na conexão com o banco.", vbCritical
-        Exit Sub
-    End If
+    Set conn = DatabaseService.AbrirConexao()
+    If conn Is Nothing Then Exit Function
 
-    Set rs = SelectColumn(conn)
-    If rs Is Nothing Then
-        MsgBox "Falha ao buscar dados.", vbCritical
+    Set rs = DatabaseService.BuscarFotoSocio(conn)
+    If rs Is Nothing Or rs.EOF Then
+        rs.Close
         conn.Close
-        Exit Sub
+        Exit Function
     End If
 
-    Dim linha As Integer
-    linha = 1
-
-    Do While Not rs.EOF
-        Call ConvertImg(rs)
-        rs.MoveNext
-    Loop
+    SalvarBlob rs("xxxxxx").Value, CAMINHO_FOTO
 
     rs.Close
     conn.Close
 
-    MsgBox "Imagens importadas com sucesso!"
-End Sub
-
-Private Function DbConect() As Object
-    Dim conn As Object
-    Dim strConn As String
-
-    strConn = "Provider=xxxxxx;" & _
-              "Data Source=xxxxxx;" & _
-              "Initial Catalog=xxxxxx;" & _
-              "User ID=xxxxxx;" & _
-              "Password=xxxxxx;"
-
-    Set conn = CreateObject("ADODB.Connection")
-    conn.Open strConn
-
-    Set DbConect = conn
+    BuscarEConverterFoto = CAMINHO_FOTO
 End Function
 
-Private Function SelectColumn(conn As Object) As Object
-    Dim rs As Object
-    Dim strSearch As String
-    Dim numSocio As Long
-
-    numSocio = Worksheets("pesquisa").Range("B5").Value
-    strSearch = "SELECT CLB_SocioFoto FROM CLB_SOCIO WHERE CLB_SocioID = " & numSocio
-
-    Set rs = CreateObject("ADODB.Recordset")
-    rs.Open strSearch, conn
-
-    Set SelectColumn = rs
-End Function
-
-Private Sub ConvertImg(rs As Object)
+Private Sub SalvarBlob(blob As Variant, caminho As String)
     Dim stream As Object
-    Dim caminho As String
-
-    caminho = "M:\ADM_FIN\GER_FIN\14 - Diversos Marcello\15-sugestoes-reclamacoes\fotos-arquivadas\foto.jpg"
-
     Set stream = CreateObject("ADODB.Stream")
     stream.Type = 1
     stream.Open
-    stream.Write rs("CLB_SocioFoto").Value
+    stream.Write blob
     stream.SaveToFile caminho, 2
     stream.Close
+End Sub
 
+Public Sub ExibirNaPlanilha(caminho As String)
     Dim ws As Worksheet
     Dim cell As Range
-    Set ws = Worksheets("pesquisa")
-    Set cell = ws.Range("Q5")
+    Set ws = Worksheets(PLANILHA_PESQUISA)
+    Set cell = ws.Range(CELULA_FOTO)
+
+    LimparImagemNaCelula ws, cell
 
     Dim pic As Object
-    For Each pic In ws.Pictures
-        If pic.Left >= cell.Left And pic.Top >= cell.Top Then
-            pic.Delete
-            Exit For
-        End If
-    Next pic
-
-    Dim novaPic As Object
-    Set novaPic = ws.Pictures.Insert(caminho)
-    With novaPic
+    Set pic = ws.Pictures.Insert(caminho)
+    With pic
         .Left = cell.Left
         .Top = cell.Top
         .Width = cell.Width
         .Height = cell.Height
     End With
 End Sub
+
+Private Sub LimparImagemNaCelula(ws As Worksheet, cell As Range)
+    Dim pic As Object
+    For Each pic In ws.Pictures
+        If pic.Left >= cell.Left And pic.Top >= cell.Top _
+        And pic.Left < cell.Left + cell.Width _
+        And pic.Top < cell.Top + cell.Height Then
+            pic.Delete
+            Exit For
+        End If
+    Next pic
+End Sub
+
